@@ -251,7 +251,7 @@ define(function (require, exports, module) {
         wallpaperEnable: (COMMAND_NAMESPACE + ".enabled")
     }
     
-    CommandManager.register("Wallpaper setting", commandId.wallpaperConfig, function () {
+    CommandManager.register("Wallpaper config", commandId.wallpaperConfig, function () {
        var dialog = Dialogs.showModalDialogUsingTemplate($dialog);
        
        dialog.done(_dialogEvents.closed);
