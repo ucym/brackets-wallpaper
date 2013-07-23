@@ -1,0 +1,10 @@
+{
+    "name": "growls.wp",
+    "title": "Brackets Wallpaper",
+    "description": "The wallpaper in Brackets.",
+    "version": "1.0.0",
+    "author": "growlScript",
+    "engines": {
+        "brackets": ">=0.26.0"
+    }
+}

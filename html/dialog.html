@@ -1,0 +1,58 @@
+<div id="growls-wp-c" class="modal" style="width:100px height:100px">
+    <div class="modal-header">
+        <h1 class="dialog-title">Wallpaper</h1>
+    </div>
+    
+    <div class="modal-body">
+        <section id="growls-wp-c-fileselector" class="input-append growls-wp-c-left">
+            <h4 class="control-label" for="growls-wp-c-selectedfile">Wallpaper</h4>
+            
+            <p>
+                <input id="growls-wp-c-selectedfile" class="span4" type="text" value="{{wallpaper}}" readonly="true">
+                <button class="btn primary">Select</button>
+            </p>
+        </section>
+        
+        <section class="growls-wp-c-right">
+            <h4 class="control-label">Image Position</h4>
+            
+            <table id="growls-wp-c-posselector">
+                <tr>
+                    <td><input type="radio" name="growls-wp-c-pos" value="left top"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="center top"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="right top"></td>
+                </tr>
+                <tr>
+                    <td><input type="radio" name="growls-wp-c-pos" value="left center"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="center center"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="right center"></td>
+                </tr>
+                <tr>
+                    <td><input type="radio" name="growls-wp-c-pos" value="left bottom"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="center bottom"></td>
+                    <td><input type="radio" name="growls-wp-c-pos" value="right bottom"></td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="growls-wp-c-filterselector" class="growls-wp-c-left">
+            <h4 class="control-label">Filter Type</h4>
+            <label><input type="checkbox" id="growls-wp-c-f-dummy1" value="growls-wp-layer-overlay"> Semitransparent-white</label>
+            <label><input type="checkbox" id="growls-wp-c-f-dummy2" value="growls-wp-layer-csseffect"> blur(slower)</label>
+        </section>
+        
+        <section id="growls-wp-c-repeattype" class="growls-wp-c-right">
+            <h4 class="control-label">Image repeating</h4>
+            
+            <label class="control-label"><input type="radio" name="repeat" value="no-repeat"> no</label>
+            <label class="control-label"><input type="radio" name="repeat" value="repeat-x"> only-horizonal(x)</label>
+            <label class="control-label"><input type="radio" name="repeat" value="repeat-y"> only-vertical(y)</label>
+            <label class="control-label"><input type="radio" name="repeat" value="repeat"> repeat</label>
+        </section>
+    </div>
+    
+    <div class="modal-footer">
+        <button class="dialog-button btn" data-button-id="cancel">Cancel</button>
+        <button class="dialog-button btn primary" data-button-id="save">Save</button>
+    </div>
+</div>
