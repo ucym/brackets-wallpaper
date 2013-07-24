@@ -218,6 +218,9 @@ define(function (require, exports, module) {
                 $dialog = null;
             }
             
+            // Load configure dialog
+            $dialog = $(Mustache.render(dialogTmpl, _config));
+            _dialogEvents.initialize();
             
             if (_config.enable() === true) {
                 // Load style (force override)
@@ -225,10 +228,6 @@ define(function (require, exports, module) {
                 
                 // Load wallpaper layer
                 $container = $(Mustache.render(wpLayers, _config)).prependTo("#editor-holder");
-                
-                // Load configure dialog
-                $dialog = $(Mustache.render(dialogTmpl, _config));
-                _dialogEvents.initialize();
                 
                 // Enable filter
                 _config.enabledFilters().forEach(function (cls) {
