@@ -79,7 +79,7 @@ define(function (require, exports, module) {
             if (state != null) {
                 _plainConfig.enable = !!state;
             } else {
-                return !!_plainConfig.enable;
+                return (_plainConfig.enable == null ? true : !!_plainConfig.enable);
             }
         },
         
@@ -143,18 +143,20 @@ define(function (require, exports, module) {
             // image attached position
             $dialog
                 .find("#growls-wp-c-posselector input")
-                .filter("[value='" + _config.imagePosition() + "']")[0].checked = true;
+                .filter("[value='" + _config.imagePosition() + "']")
+                .attr("checked", true);
             
             // Enabled filters
             var filterCheckers = $dialog.find("#growls-wp-c-filterselector input");
             _config.enabledFilters().forEach(function(cls) {
-                filterCheckers.filter("[value='" + cls + "']")[0].checked = true;
+                filterCheckers.filter("[value='" + cls + "']").attr("checked", true);
             });
             
             // Image repeat type
             $dialog
                 .find("#growls-wp-c-repeattype input")
-                .filter("[value='" + _config.imageRepeat() + "']")[0].checked = true;
+                .filter("[value='" + _config.imageRepeat() + "']")
+                .attr("checked", true);
         },
         startFileSelect: function () {
             // 1:Allow multi select, 2:Choose directories, 3:title
@@ -189,8 +191,7 @@ define(function (require, exports, module) {
                 });
                 _config.enabledFilters(classes);
                 
-                
-                var repeatType = $dialog.find("#growls-wp-c-repeattype input:checked").val();;
+                var repeatType = $dialog.find("#growls-wp-c-repeattype input:checked").val();
                 _config.imageRepeat(repeatType);
                 
                 _config._save();
