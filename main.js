@@ -38,6 +38,16 @@ define(function (require, exports, module) {
     // Load CSS
     ExtensionUtils.loadStyleSheet(module, "css/Wallpaper.css");
     
+    /*
+     * Will load GPU Enable CSS if brackets newer than sprint 27.
+     * (May display glitching in version 27 or less.)
+     **/
+    try {
+        if (parseInt(brackets.metadata.apiVersion.split(".")[1], 10) >= 27) {
+            ExtensionUtils.loadStyleSheet(module, "css/Accelerator.css");
+        }
+    } catch (e) {}
+    
     /**
      *  Load configure
      */
