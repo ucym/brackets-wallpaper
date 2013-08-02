@@ -1,8 +1,8 @@
 {
     "name": "brackets-wallpaper",
     "title": "Brackets Wallpaper",
-    "description": "The wallpaper in Brackets.",
-    "version": "1.0.3",
+    "description": "Wallpaper in Brackets.",
+    "version": "1.0.4",
     "author": "growlScript",
     "engines": {
         "brackets": ">=0.26.0"

@@ -1,46 +1,177 @@
+/*jslint vars: true, plusplus: true, devel: true, nomen: true, indent: 4, maxerr: 50, regexp: true */
+/*global define, window, $, brackets, Mustache */
 define(function (require, exports, module) {
     "use strict";
     
-    /**
-     *  Module informations
-     */
-    var MOD_PREF = "growls-wp",
-        NAMESPACE = "glowls.wp",
-        
-        STORAGE_NAMESPACE = (NAMESPACE + ".config"),
-        COMMAND_NAMESPACE = (NAMESPACE + ".command");
-    
-    /**
-     *  Import modules
-     */
+    // Imports
     var NativeFileSystem    = brackets.getModule("file/NativeFileSystem").NativeFileSystem,
         CommandManager      = brackets.getModule("command/CommandManager"),
         ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
         Menus               = brackets.getModule("command/Menus"),
         Dialogs             = brackets.getModule("widgets/Dialogs"),
-        DefaultDialogs      = brackets.getModule("widgets/DefaultDialogs");
+        
+        ModelPreferences    = require("ModelPreferences");
     
-    /**
-     *  Load HTML templates
-     */
-    // Load styles
-    var styleSource         = require("text!css/Overrides.css"),
-        $style              = $("<style>"),
     
-    // Wallpaper containers
-        wpLayers            = require("text!html/wallpaperLayer.html"),
-        $container          = null,
+    // Define Const
+    var PREFERENCES_KEY = "com.adobe.brackets.brackets-wallpaper",
+        MOD_PREF = "brackets-wallpaper",
+        NAMESPACE = "brackets.wallpaper",
+        
+        COMMAND_PREF = (NAMESPACE + ".command");
+        
     
-    // Dialog templetes
-        dialogTmpl          = require("text!html/dialog.html"),
-        $dialog             = null;
+    // Define Variables
+    var tmplPreference  = {
+            _tmpl:      Mustache.compile(require("text!html/preference.html")),
+            compile:    function () {
+                var $p = $(this._tmpl(ModelPreferences)),
+                    mp = ModelPreferences;
+                
+                // Show file selector
+                $p.on("click", "[data-action='fileSelect']", function () {
+                    /* Memo:
+                        1:Allow multi select, 2:Choose directories, 3:title
+                        4:initialPath, 5:fileTypes, 6:success, 7:error
+                    **/
+                    NativeFileSystem
+                        .showOpenDialog(false, false, "choose wallpaper", null, ["png", "jpg", "jpeg"],
+                            function (paths) {
+                                if (paths.length > 0) {
+                                    $("input[name='image']").val(paths[0]);
+                                }
+                            });
+                        
+                    return false;
+                });
+                
+                // apply selected position
+                $p.find(".posSelector input").filter("[value='" + mp.position() + "']")[0].checked = true;
+                
+                // apply filter type
+                var filterChecks = $p.find("input[name='filters']");
+                $.each(mp.filters(), function (k, v) {
+                    try {
+                        filterChecks.filter("[value='" + v + "']")[0].checked = true;
+                    } catch (e) {}
+                });
+                
+                // apply repeatType
+                try {
+                    $p.find("select[name='repeatType']").find("option[value='" + mp.repeatType() + "']")[0].selected = true;
+                } catch (e) {}
+                
+                return $p;
+            }
+        },
+        tmplWallpaper   = {
+            _tmpl:      Mustache.compile(require("text!html/wallpaper.html")),
+            compile:    function () {
+                var $wp = $(this._tmpl(ModelPreferences)),
+                    mp = ModelPreferences;
+                
+                $wp.toggleClass("brackets-wp-active", mp.enabled());
+                
+                var fxDom = $wp.find("[data-fxid]");
+                $.each(mp.filters(), function (k, v) {
+                    fxDom.filter("[data-fxid='" + v + "']").attr("data-fx-active", "");
+                });
+                
+                return $wp;
+            }
+        },
+        
+        $pref           = null,
+        $wp             = null;
+    
+    
+    // Define Functions
+    function initialize() {
+        if ($pref !== null) {
+            $pref.remove();
+            $pref = null;
+        }
+        
+        if ($wp !== null) {
+            $wp.remove();
+            $pref = null;
+        }
+        
+        $pref = tmplPreference.compile();
+        $wp = tmplWallpaper.compile();
+        
+        $wp.prependTo("#editor-holder");
+        
+        if (ModelPreferences.enabled()) {
+            $("#editor-holder").attr("brackets-wp-active", "");
+        } else {
+            $("#editor-holder").removeAttr("brackets-wp-active");
+        }
+    }
+    
+    function enableStateChange() {
+        if (ModelPreferences.enabled()) {
+            $("#editor-holder").attr("brackets-wp-active", "");
+        } else {
+            $("#editor-holder").removeAttr("brackets-wp-active");
+        }
+        
+        $wp.toggleClass("brackets-wp-active", ModelPreferences.enabled());
+    }
+    
+    function savePreference() {
+        // parse input preferences
+        var plain = $pref.find("form").serializeArray(),
+            parsed = {};
+            
+        plain.forEach(function (elem) {
+            parsed[elem.name] = parsed[elem.name] || [];
+            parsed[elem.name].push(elem.value);
+        });
+        
+        $.each(parsed, function (k, v) {
+            try { ModelPreferences[k].apply(ModelPreferences, v); } catch (e) {}
+        });
+        
+        initialize();
+    }
+    
+    function closePreference(result) {
+        if (result === "save") {
+            savePreference();
+        } else if (result === "cancel") {
+            $pref = tmplPreference.compile();
+        }
+    }
+    
+    
+    initialize();
+    
+    
+    // Register Menu
+    CommandManager.register("Wallpaper Preferences", COMMAND_PREF + ".preference", function () {
+        var dialog = Dialogs.showModalDialogUsingTemplate($pref);
+        
+        dialog.done(closePreference);
+    });
+    
+    CommandManager.register("Enable Wallpaper", COMMAND_PREF + ".enebled", function () {
+        this.setChecked(ModelPreferences.enabled(!this.getChecked()));
+        
+        enableStateChange();
+    }).setChecked(ModelPreferences.enabled());
+    
+    Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).addMenuItem(COMMAND_PREF + ".preference");
+    Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).addMenuItem(COMMAND_PREF + ".enebled");
+    
     
     // Load CSS
     ExtensionUtils.loadStyleSheet(module, "css/Wallpaper.css");
+    ExtensionUtils.loadStyleSheet(module, "css/Overrides.css");
     
     /*
      * Will load GPU Enable CSS if brackets newer than sprint 27.
-     * (May display glitching in version 27 or less.)
+     * (May display glitching in sprint 26.)
      **/
     try {
         if (parseInt(brackets.metadata.apiVersion.split(".")[1], 10) >= 27) {
@@ -48,233 +179,18 @@ define(function (require, exports, module) {
         }
     } catch (e) {}
     
-    /**
-     *  Load configure
-     */
-    var _plainConfig;
-    
-    try {
-        _plainConfig = JSON.parse(localStorage.getItem(STORAGE_NAMESPACE));
-    } catch (e) {
-        console.error(MOD_PREF + ": cannot read configure", e);
-    } finally {
-        _plainConfig = _plainConfig || {};
-    }
-    
-    // configure
-    var _config = {
-        _isValid: function () {
-            var state = (_plainConfig != null);
-            
-            if (state === false) {
-                _plainConfig = {};
-                this._save();
-                console.error(MOD_PREF + ": Cannot readed configure.");
-            }
-            
-            return state;
-        },
+    exports.unload = function () {
+        Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).removeMenuItem(COMMAND_PREF + ".preference");
+        Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).removeMenuItem(COMMAND_PREF + ".enebled");
         
-        _save: function () {
-            try {
-                localStorage.setItem(STORAGE_NAMESPACE, JSON.stringify(_plainConfig));
-            } catch (e) {
-                console.error(MOD_PREF + ": Missing save configure", e);
-            }
-        },
+        if ($pref !== null) {
+            $pref.remove();
+            $pref = null;
+        }
         
-        enable: function (state) {
-            if (this._isValid() !== true) return;
-                
-            if (state != null) {
-                _plainConfig.enable = !!state;
-            } else {
-                return (_plainConfig.enable == null ? true : !!_plainConfig.enable);
-            }
-        },
-        
-        wallpaper: function (path) {
-            if (this._isValid() !== true) return;
-            
-            if (path != null) {
-                path = path.replace(/\\/g, "/");
-                _plainConfig.imagePath = path;
-            } else {
-                var path = _plainConfig.imagePath;
-                
-                if (path != null) {
-                    path = path.replace(/\\/g, "/");
-                }
-                
-                return path;
-            }
-        },
-        
-        imagePosition: function (pos) {
-            if (this._isValid() !== true) return;
-            
-            if (pos != null && typeof pos === "string" && pos.split(" ").length === 2) {
-                _plainConfig.imagePosition = pos;
-            } else {
-                return _plainConfig.imagePosition || "initial";
-            }
-        },
-        
-        imageRepeat: function (repeat) {
-            if (this._isValid() !== true) return;
-            
-            if (repeat != null && typeof repeat === "string") {
-                _plainConfig.imageRepeat = repeat;
-            } else {
-                return _plainConfig.imageRepeat || "no-repeat";
-            }
-        },
-        
-        enabledFilters: function (filters) {
-            if (this._isValid() !== true) return;
-            
-            if (filters != null && Object.prototype.toString.call(filters).slice(8, -1) === "Array") {
-                _plainConfig.enabledFilters = filters;
-            } else {
-                return _plainConfig.enabledFilters || [];
-            }
+        if ($wp !== null) {
+            $wp.remove();
+            $pref = null;
         }
     };
-    
-    /**
-     *  define dialog events
-     */
-    var _dialogEvents = {
-        initialize: function () {
-            $dialog
-                .on("click", "#growls-wp-c-fileselector button", _dialogEvents.startFileSelect)
-                .on("click", "#growls-wp-c-posselector input", _dialogEvents.imagePositionSelected);
-            
-            // image attached position
-            $dialog
-                .find("#growls-wp-c-posselector input")
-                .filter("[value='" + _config.imagePosition() + "']")
-                .attr("checked", true);
-            
-            // Enabled filters
-            var filterCheckers = $dialog.find("#growls-wp-c-filterselector input");
-            _config.enabledFilters().forEach(function(cls) {
-                filterCheckers.filter("[value='" + cls + "']").attr("checked", true);
-            });
-            
-            // Image repeat type
-            $dialog
-                .find("#growls-wp-c-repeattype input")
-                .filter("[value='" + _config.imageRepeat() + "']")
-                .attr("checked", true);
-        },
-        startFileSelect: function () {
-            // 1:Allow multi select, 2:Choose directories, 3:title
-            // 4:initialPath, 5:fileTypes, 6:success, 7:error
-            NativeFileSystem.showOpenDialog(false, false, "choose wallpaper",
-                                            null, ["png","jpg","jpeg"], _dialogEvents.fileSelected);
-        },
-        
-        fileSelected: function (paths) {
-            if (paths.length > 0) {
-                $("#growls-wp-c-selectedfile", $dialog).val(paths[0]);
-            }
-            return false;
-        },
-        
-        imagePositionSelected: function () {
-            
-        },
-        
-        closed: function (result) {
-            if (result === "save") {
-                
-                var wallpaperURL = $dialog.find("#growls-wp-c-selectedfile").val();
-                _config.wallpaper(wallpaperURL);
-                
-                var wallpaperAttachPosition = $dialog.find("#growls-wp-c-posselector input:checked").val();
-                _config.imagePosition(wallpaperAttachPosition);
-                
-                var classes = [];
-                $dialog.find("#growls-wp-c-filterselector input:checked").each(function () {
-                    classes.push($(this).val());
-                });
-                _config.enabledFilters(classes);
-                
-                var repeatType = $dialog.find("#growls-wp-c-repeattype input:checked").val();
-                _config.imageRepeat(repeatType);
-                
-                _config._save();
-            }
-            
-            _initialize();
-        }
-    };
-    
-    
-    function _initialize() {
-        try {
-            // remove old elements
-            if ($style != null) {
-                $style.remove();
-            }
-            
-            if ($container != null) {
-                $container.remove();
-                $container = null;
-            }
-            
-            if ($dialog != null) {
-                $dialog.remove();
-                $dialog = null;
-            }
-            
-            // Load configure dialog
-            $dialog = $(Mustache.render(dialogTmpl, _config));
-            _dialogEvents.initialize();
-            
-            if (_config.enable() === true) {
-                // Load style (force override)
-                $style.text(styleSource).appendTo("head");
-                
-                // Load wallpaper layer
-                $container = $(Mustache.render(wpLayers, _config)).prependTo("#editor-holder");
-                
-                // Enable filter
-                _config.enabledFilters().forEach(function (cls) {
-                    $("." + cls, $container).attr("data-wp-fx-enable", "a");
-                });
-            }
-        } catch (e) {
-            console.error(MOD_PREF + ": initialize error", e);
-        }
-    }
-    
-    _initialize();
-    
-    
-    /**
-     *  Register Menu
-     */
-    var commandId = {
-        wallpaperConfig: (COMMAND_NAMESPACE + ".config"),
-        wallpaperEnable: (COMMAND_NAMESPACE + ".enabled")
-    }
-    
-    CommandManager.register("Wallpaper config", commandId.wallpaperConfig, function () {
-       var dialog = Dialogs.showModalDialogUsingTemplate($dialog);
-       
-       dialog.done(_dialogEvents.closed);
-    });
-    Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).addMenuItem(commandId.wallpaperConfig);
-    
-    CommandManager.register("Enable Wallpaper", commandId.wallpaperEnable, function () {
-        var state;
-        this.setChecked(state = !this.getChecked());
-        
-        _config.enable(state);
-        _config._save();
-        _initialize();
-    }).setChecked(_config.enable());
-    Menus.getMenu(Menus.AppMenuBar.VIEW_MENU).addMenuItem(commandId.wallpaperEnable);
 });
