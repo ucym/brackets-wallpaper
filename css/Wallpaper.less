@@ -51,18 +51,5 @@
     
     .posSelector input {
         position: relative;
-        
-        &:checked:after {
-            position: absolute;
-            width: 100px;
-            height: 80px;
-            
-            background-color: #86abff;
-        }
-        
-        //&:checked:after { display: block;}
-        
-        &[value="left top"]:after { top: 0; left: 0;}
-        &[value="center top"]:after { top: 0; left: -50px;}
     }
 }
