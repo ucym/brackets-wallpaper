@@ -4,13 +4,13 @@ define(function (require, exports, module) {
     "use strict";
     
     // Imports
-    var NativeFileSystem    = brackets.getModule("file/NativeFileSystem").NativeFileSystem,
+    var AppInit             = brackets.getModule("utils/AppInit"),
         CommandManager      = brackets.getModule("command/CommandManager"),
+        Dialogs             = brackets.getModule("widgets/Dialogs"),
         ExtensionUtils      = brackets.getModule("utils/ExtensionUtils"),
         Menus               = brackets.getModule("command/Menus"),
-        Dialogs             = brackets.getModule("widgets/Dialogs"),
-        
-        ModelPreferences    = require("ModelPreferences");
+        ModelPreferences    = require("ModelPreferences"),
+        NativeFileSystem    = brackets.getModule("file/NativeFileSystem").NativeFileSystem;
     
     
     // Define Const
