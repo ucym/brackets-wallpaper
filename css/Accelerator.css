@@ -1,5 +1,0 @@
-/* Enable GPU acceleration */
-#brackets-wp-container {
-    -webkit-transform-style: preserve-3d;
-    -webkit-backface-visibility: hidden;
-}
